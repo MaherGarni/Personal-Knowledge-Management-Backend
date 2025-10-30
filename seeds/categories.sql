@@ -1,0 +1,63 @@
+-- \connect pkm_db
+
+-- -- main topics
+-- -- INSERT INTO main_app_category (name, parent_id, color)
+-- -- VALUES ('Technical Mastery', null, '#1f77b4');
+-- -- INSERT INTO main_app_category (name, parent_id, color)
+-- -- VALUES ('Soft & Interpersonal Skills', null, '#ff7f0e');
+-- -- INSERT INTO main_app_category (name, parent_id, color)
+-- -- VALUES ('Personal & Habitual Skills', null, '#2ca02c');
+
+-- -- technical skills
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Core Programming & CS Fundamentals', 31, '#aec7e8');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Frontend Development', 31, '#1f77b4');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Backend Development', 31, '#17becf');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Software Design & Architecture', 31, '#c7c7c7');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Cloud, DevOps & Infrastructure', 31, '#9467bd');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Testing & Quality Assurance', 31, '#8c564b');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Databases & Data Management', 31, '#e377c2');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('AI / Machine Learning & Data Skills', 31, '#7f7f7f');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Security & Cybersecurity Awareness', 31, '#bcbd22');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('System Design & Scalability', 31, '#ffbb78');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Software Engineering Practices', 31, '#d62728');
+
+-- -- soft skills
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Communication Skills', 32, '#ff9896');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Collaboration & Teamwork', 32, '#c49c94');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Problem Solving & Critical Thinking', 32, '#f7b6d2');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Leadership', 32, '#dbdb8d');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Time & Task Management', 32, '#9edae5');
+
+-- -- personal & habitual skills
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Deep Work & Focus', 33, '#17becf');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Discipline & Consistency', 33, '#bcbd22');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Professionalism & Work Ethics', 33, '#ff9896');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Documentation & Knowledge Management', 33, '#c5b0d5');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Self-Reflection & Improvement', 33, '#ff7f0e');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Mental & Physical Well-being', 33, '#2ca02c');
+-- INSERT INTO main_app_category (name, parent_id, color)
+-- VALUES ('Curiosity & Continuous Learning', 33, '#8c564b');
+
+
