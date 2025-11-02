@@ -18,11 +18,24 @@ class CategoriesIndex(APIView):
 
     def get(self, request):
         try:
-            queryset = Category.objects.all()
+            queryset = Category.objects.filter(hierarchy=1)
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def post(self, request):
+        try:
+            serializer = self.serializer_class(data=request.data, context={'request': request})
+            if serializer.is_valid():
+                serializer.save()
+                updated_categories = Category.objects.filter(hierarchy=1)
+                response_data = self.serializer_class(updated_categories, many=True)
+                return Response(response_data.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as err:
+            print("line whatever,",serializer.errors)
+            return Response({'eroor':str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class CategoryDetail(APIView):
     serializer_class = CategorySerializer   
@@ -35,10 +48,20 @@ class CategoryDetail(APIView):
             serializer = self.serializer_class(category, data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                updated_categories = Category.objects.all()
-                serializer = self.serializer_class(updated_categories, many=True)
-                return Response(serializer.data, status=status.HTTP_200_OK)
+                queryset = Category.objects.filter(hierarchy=1)
+                updated_categories = self.serializer_class(queryset, many=True).data
+                return Response(updated_categories, status=status.HTTP_200_OK)
             print(serializer.errors, "line39")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as err:
+            return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def delete(self, request, category_id):
+        try:
+            category = get_object_or_404(Category, id=category_id)
+            category.delete()
+            queryset = Category.objects.filter(hierarchy=1)
+            updated_categories = self.serializer_class(queryset, many=True).data
+            return Response(updated_categories, status=status.HTTP_200_OK)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
