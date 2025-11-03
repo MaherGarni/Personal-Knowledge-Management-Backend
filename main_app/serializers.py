@@ -1,9 +1,11 @@
 from rest_framework import serializers
 from .models import Category, Lesson
 
+        
 class CategorySerializer(serializers.ModelSerializer):
     parent = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), allow_null=True, required=False)
     children=serializers.SerializerMethodField()
+    # lessons = LessonSerializer(many=True, read_only=True)
     
     class Meta:
         model = Category
@@ -13,7 +15,6 @@ class CategorySerializer(serializers.ModelSerializer):
         return CategorySerializer(obj.children.all(), many=True).data
     
 class LessonSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Lesson
         fields = '__all__'

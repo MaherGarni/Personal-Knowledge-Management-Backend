@@ -42,7 +42,7 @@ class CategoryDetail(APIView):
     def get(self, request, category_id):
         try:
             category = get_object_or_404(Category, id=category_id)
-            cat_lessons = Lesson.objects.all()
+            cat_lessons = Lesson.objects.filter(category=category_id)
             serialized_lessons = LessonSerializer(cat_lessons, many=True)
             serializer = self.serializer_class(category)
             return Response({
@@ -87,7 +87,7 @@ class CategoryLessons(APIView):
                 serializer.save()
                 category = get_object_or_404(Category, id=category_id)
                 category_serialized = CategorySerializer(category)
-                queryset =  Lesson.objects.all()
+                queryset =  Lesson.objects.filter(category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                 "category": category_serialized.data,
@@ -99,13 +99,13 @@ class CategoryLessons(APIView):
 class LessonDetail(APIView):
     serializer_class = LessonSerializer
     
-    def put(self, request, lesson_id):
+    def put(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
             serializer = self.serializer_class(lesson, data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                queryset = Lesson.objects.all()
+                queryset = Lesson.objects.filter(category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                     "lessons":serializer.data,
@@ -114,11 +114,11 @@ class LessonDetail(APIView):
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    def delete(self, request, lesson_id):
+    def delete(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
             lesson.delete()
-            queryset = Lesson.objects.all()
+            queryset = Lesson.objects.filter(category=category_id)
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as err:
