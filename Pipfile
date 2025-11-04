@@ -8,6 +8,10 @@ django = "*"
 psycopg2-binary = "*"
 djangorestframework = "*"
 django-cors-headers = "*"
+openai = "*"
+python-dotenv = "*"
+google-genai = "*"
+djangorestframework-simplejwt = "*"
 
 [dev-packages]
 
