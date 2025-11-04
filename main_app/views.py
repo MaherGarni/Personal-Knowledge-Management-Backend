@@ -11,6 +11,10 @@ import json
 # import User model, UserSerializer, and RefreshToken...
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
+# new import!
+from django.contrib.auth import authenticate
+
+
 
 
 client = genai.Client()
@@ -63,7 +67,7 @@ def gemini_AI(prompt):
     
 def lesson_category_check(lesson, category):
     prompt = f"""
-                Determine if the lesson fits the selected category.
+                Determine if the lesson fits the selected category. lesson don't have to match the category name exactly, at least it could be considerd under that category.
                 Return JSON:
                 {{
                   "belongs": true/false,
@@ -76,6 +80,7 @@ def lesson_category_check(lesson, category):
                 Selected Category: "{category.name}"
         """
     results = gemini_AI(prompt)
+    print(prompt)
     return results
 
 def update_skill_score(lesson, categories):
@@ -108,6 +113,23 @@ class CreateUserView(generics.CreateAPIView):
         	    'user': UserSerializer(user).data
             }
             return Response(data, status=status.HTTP_201_CREATED)
+        except Exception as err:
+            return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class LoginView(APIView):
+
+    def post(self, request):
+        try:
+            username = request.data.get('username')
+            password = request.data.get('password')
+            user = authenticate(username=username, password=password)
+            if user:
+                print(user)
+                refresh = RefreshToken.for_user(user)
+                content = {'refresh': str(refresh), 'access': str(refresh.access_token),'user': UserSerializer(user).data}
+                return Response(content, status=status.HTTP_200_OK)
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -150,7 +172,7 @@ class CategoryDetail(APIView):
     def get(self, request, category_id):
         try:
             category = get_object_or_404(Category, id=category_id)
-            cat_lessons = Lesson.objects.filter(category=category_id)
+            cat_lessons = Lesson.objects.filter(user=request.user, category=category_id)
             serialized_lessons = LessonSerializer(cat_lessons, many=True)
             serializer = self.serializer_class(category)
             return Response({
@@ -214,9 +236,9 @@ class CategoryLessons(APIView):
         try:
             serializer = self.serializer_class(data=data)
             if serializer.is_valid():
-                serializer.save()
+                serializer.save(user_id=request.user.id)
                 category_serialized = CategorySerializer(category)
-                queryset =  Lesson.objects.filter(category=category_id)
+                queryset =  Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                 "category": category_serialized.data,

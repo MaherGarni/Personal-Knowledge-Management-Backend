@@ -34,6 +34,7 @@ class CategorySerializer(serializers.ModelSerializer):
         return CategorySerializer(obj.children.all(), many=True).data
     
 class LessonSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Lesson
         fields = '__all__'

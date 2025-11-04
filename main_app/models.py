@@ -1,11 +1,12 @@
 from django.db import models
-
+from django.contrib.auth.models import User
     
 class Category(models.Model):
     name   = models.CharField(max_length=150)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='children')
     color  = models.CharField(max_length=20, null=True)
     hierarchy = models.IntegerField()
+    
 
     class Meta:
         verbose_name_plural = "Categories"
@@ -22,6 +23,7 @@ class Lesson(models.Model):
     updated_at = models.DateTimeField(auto_now = True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     score = models.IntegerField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     class Meta:
         ordering = ['-updated_at']
