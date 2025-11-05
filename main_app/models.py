@@ -29,3 +29,14 @@ class Lesson(models.Model):
         ordering = ['-updated_at']
     def __str__(self):
         return f"{self.title}"
+    
+class UserCategoryScore(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="user_scores")
+    aggregated_score = models.FloatField(default=0)
+    lesson_scores = models.JSONField(default=list)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ('user', 'category')
+

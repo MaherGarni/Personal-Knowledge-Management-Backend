@@ -1,4 +1,4 @@
-Personal Knowledge Management App — Backend (Django)
+# Personal Knowledge Management App — Backend (Django)
 
 This backend powers a personal knowledge-tracking system designed to help users organize their learning and skill development.
 The system structures knowledge into three hierarchical levels: main topic → subtopic → skill, allowing users to add lessons for each skill and track progress over time.
@@ -23,12 +23,13 @@ Each lesson created via the API is processed to ensure it belongs to the correct
 - **PostgreSQL**    
 - **Gemeni API**   
 - **JWT Authentication**   
-- **VS Code**   
-- **GitHub**   
 
 ## Project Links  
 - **[Frontend Repo](https://github.com/MaherGarni/Personal-Knowledge-Management-Frontend)**  
 - **[Backend link](http://localhost:8000/)**  
+
+## ERD Diagram  
+![ERD](./assets/ERD_diagram.png) 
 
 ## Routing Table 
 <h3>User</h3>
@@ -60,14 +61,15 @@ Each lesson created via the API is processed to ensure it belongs to the correct
     <tr><td>DELETE</td><td>/categories/:id/lessons/:id</td><td>delete</td><td>Delete a lesson</td></tr>
 </table>
 
-<h3>SkillsLevels</h3>
+<h3>UserSkillScore</h3>
 <table border="1">
     <tr><th>HTTP Verb</th><th>Path</th><th>Action</th><th>Description</th></tr>
-    <tr><td>GET</td><td>/skill_levels</td><td>index</td><td>List all skill levels</td></tr>
+    <tr><td>GET</td><td>/scores</td><td>index</td><td>List all user scores for all skills</td></tr>
 </table>
 
   
 ## Icebox Features  
 - Support file/image uploads for lessons
 - More advanced AI feedback + skill growth insights
+- Search functionality
 

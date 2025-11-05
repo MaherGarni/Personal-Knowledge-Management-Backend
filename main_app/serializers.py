@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Lesson
+from .models import Category, Lesson, UserCategoryScore
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -38,3 +38,9 @@ class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = '__all__'
+        
+        
+class UserCategoryScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserCategoryScore
+        fields = ["aggregated_score", "lesson_scores"]

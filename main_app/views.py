@@ -67,10 +67,11 @@ def gemini_AI(prompt):
     
 def lesson_category_check(lesson, category):
     prompt = f"""
-                Determine if the lesson fits the selected category. lesson don't have to match the category name exactly, at least it could be considerd under that category.
+                Determine if the lesson fits the selected category. lesson don't have to match the category name exactly, 
+                at least it could be considerd under that category.
                 Return JSON:
                 {{
-                  "belongs": true/false,
+                    "belongs": true/false,
                 }}
 
                 Lesson:
@@ -86,7 +87,8 @@ def lesson_category_check(lesson, category):
 def update_skill_score(lesson, categories):
     prompt = f""" I am going to provide you with a scoring rubric that is used to judge all lessons being created within a 
             catgeory. Based on the lesson that the user has described having learned and the categories that the lesson is 
-            related, judge the current lesson. Return a json object with the score: like this: {{ "score": number}}. Grading rubric: {grading_rubric}. Lesson to grade: {lesson} Lesson categories: {categories}"""
+            related, judge the current lesson. Return a json object with the score: like this: {{ "score": number}}. 
+            Grading rubric: {grading_rubric}. Lesson to grade: {lesson} Lesson categories: {categories}"""
             
     results = gemini_AI(prompt)
     return results
@@ -211,25 +213,17 @@ class CategoryDetail(APIView):
 class CategoryLessons(APIView):
     serializer_class = LessonSerializer
     def post(self, request, category_id):
-        category = get_object_or_404(Category, id=category_id)
-        # print(request.data, "jwebfiwubrfi")
-        # 1 - check lesson contents matches user category choice
-
-    
+        category = get_object_or_404(Category, id=category_id)    
         lesson_categoy_results = lesson_category_check(request.data, category)
-        print(lesson_categoy_results)
-        
         if not lesson_categoy_results['belongs'] :
-            return Response({"failed":"failed"})
-        
-        
+            return Response({"failed":"failed"})        
         categories = {
-    "grandparent-category": category.parent.parent.__str__(),
-    "parent-category": category.parent.__str__(),
-    "child-category_current": category.__str__()
-}
+        "grandparent-category": category.parent.parent.__str__(),
+        "parent-category": category.parent.__str__(),
+        "child-category_current": category.__str__()
+        }
         skill_results = update_skill_score(request.data, categories)
-        
+    
         data = request.data.copy()
         data["score"] = skill_results['score']
         
@@ -256,7 +250,7 @@ class LessonDetail(APIView):
             serializer = self.serializer_class(lesson, data=request.data)
             if serializer.is_valid():
                 serializer.save()
-                queryset = Lesson.objects.filter(category=category_id)
+                queryset = Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                     "lessons":serializer.data,
@@ -269,9 +263,24 @@ class LessonDetail(APIView):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
             lesson.delete()
-            queryset = Lesson.objects.filter(category=category_id)
+            queryset = Lesson.objects.filter(user=request.user, category=category_id)
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+# User Verification
+class VerifyUserView(APIView):
+    def get(self, request):
+        try:
+            user = User.objects.get(username=request.user.username)
+            try:
+                refresh = RefreshToken.for_user(user)
+                return Response({'refresh': str(refresh),'access': str(refresh.access_token),'user': UserSerializer(user).data}, status=status.HTTP_200_OK)
+            except Exception as token_error:
+                return Response({"detail": "Failed to generate token.", "error": str(token_error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as err:
+            return Response({"detail": "Unexpected error occurred.", "error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         
