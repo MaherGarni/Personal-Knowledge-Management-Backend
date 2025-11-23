@@ -20,17 +20,18 @@ from django.contrib.auth import authenticate
 client = genai.Client()
 
 grading_rubric = {
-    "1": "**Novice / Beginner** - Learner is just starting. Understands basic concepts but requires guidance to perform even simple tasks. Mistakes are frequent.",
-    "2": "**Very Low Proficiency** - Learner can perform extremely simple tasks independently, but relies on examples or templates. Very limited problem-solving ability.",
-    "3": "**Low Proficiency** - Learner can complete simple tasks with some confidence. Beginning to recognize patterns and make small adjustments without direct help.",
-    "4": "**Basic / Elementary** - Learner performs basic tasks independently. Can follow instructions and replicate known patterns, but struggles with new or unexpected challenges.",
-    "5": "**Moderate / Intermediate** - Learner handles common tasks reliably. Can apply knowledge to slightly unfamiliar situations. Mistakes are occasional and usually minor.",
-    "6": "**Competent** - Learner demonstrates consistent understanding. Can troubleshoot standard problems and adapt existing knowledge to new contexts.",
-    "7": "**Advanced** - Learner shows strong skill. Handles complex or multi-step tasks with minimal guidance. Begins to innovate or optimize processes.",
-    "8": "**Highly Skilled / Expert** - Learner can manage complex challenges independently. Recognizes subtleties and nuances in the skill. Can guide or mentor others.",
-    "9": "**Master** - Learner demonstrates deep understanding. Can tackle novel problems and create new approaches. Rarely makes mistakes.",        
-    "10": "**Exceptional / Innovator** - Learner is capable of redefining or transforming the domain. Demonstrates creativity, foresight, and mastery beyond standard expectations.",
+    "1-10":   "**Novice / Beginner** - Learner is just starting. Understands basic concepts but requires guidance to perform even simple tasks. Mistakes are frequent.",
+    "11-20":  "**Very Low Proficiency** - Learner can perform extremely simple tasks independently, but relies on examples or templates. Very limited problem-solving ability.",
+    "21-30":  "**Low Proficiency** - Learner can complete simple tasks with some confidence. Beginning to recognize patterns and make small adjustments without direct help.",
+    "31-40":  "**Basic / Elementary** - Learner performs basic tasks independently. Can follow instructions and replicate known patterns, but struggles with new or unexpected challenges.",
+    "41-50":  "**Moderate / Intermediate** - Learner handles common tasks reliably. Can apply knowledge to slightly unfamiliar situations. Mistakes are occasional and usually minor.",
+    "51-60":  "**Competent** - Learner demonstrates consistent understanding. Can troubleshoot standard problems and adapt existing knowledge to new contexts.",
+    "61-70":  "**Advanced** - Learner shows strong skill. Handles complex or multi-step tasks with minimal guidance. Begins to innovate or optimize processes.",
+    "71-80":  "**Highly Skilled / Expert** - Learner can manage complex challenges independently. Recognizes subtleties and nuances in the skill. Can guide or mentor others.",
+    "81-90":  "**Master** - Learner demonstrates deep understanding. Can tackle novel problems and create new approaches. Rarely makes mistakes.",
+    "91-100": "**Exceptional / Innovator** - Learner is capable of redefining or transforming the domain. Demonstrates creativity, foresight, and mastery beyond standard expectations.",
 }
+
 
 
 def gemini_AI(prompt):
@@ -42,16 +43,15 @@ def gemini_AI(prompt):
         Your responsibilities include:
         • Classifying lessons into the correct skill categories
         • Evaluating skill level based on the current lesson learned and parent / grandparent categories. The lesson and categories will be provided.
+        • Evaluate category rating based on lessons provided. 
         • Assessing growth of lessons overtime when prompted to do so.
 
         Rules:
         • Always return JSON object in the specifid format.
         • If uncertainty occurs, choose the most logical and context-appropriate answer (not a creative one)
         """
-    )
+    )    
 
-    
-    
     config = GenerateContentConfig(
         system_instruction=system_instruction,
         temperature=0.3,
@@ -81,7 +81,6 @@ def lesson_category_check(lesson, category):
                 Selected Category: "{category.name}"
         """
     results = gemini_AI(prompt)
-    print(prompt)
     return results
 
 def update_skill_score(lesson, categories):
@@ -93,10 +92,19 @@ def update_skill_score(lesson, categories):
     results = gemini_AI(prompt)
     return results
 
-def update_category_score(category, lessons):
-    prompt = """
-            I'm going to provide you with sets of lessons and thier scores, and based on the lessons i want to give a general 
-    """
+def update_category_rating(categories, lessons):
+    prompt = f""" You are to evaluate the overall rating of a Level 3 category, and it's parent level 2 category, and the evaluation will be based on the following:
+            - for level 3 category (I refer to it as skill) you will be provided with list of lessons that belong to that category. Each lesson will include lesson's title, content, and score.
+            Evaluate the overall rating of the level 3 category based on the average score of all lessons within that category.
+            - for the parent level 2 category you will be provided with list of level 3 categories includeing the one being evaluated. Each level 3 category will include its name and overall rating.
+            Evaluate the overall rating of the level 2 category based on the average rating of all its level 3 categories.
+            Note that the parent category rating should include the updated rating of the current category after including the new lesson.
+            
+            Return a json object like this:{{ "current_category_rating": number, "parent_category_rating": number}}
+            Grading rubric: {grading_rubric}. Categories include (current_category, parent_category, parent_categories and their ratings):{categories}. Lessons to grade current category: {lessons}. 
+            """
+    results = gemini_AI(prompt)
+    return results
 
 # User Registration
 class CreateUserView(generics.CreateAPIView):
@@ -116,6 +124,7 @@ class CreateUserView(generics.CreateAPIView):
             }
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as err:
+            print(serializer.errors)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
@@ -138,14 +147,12 @@ class LoginView(APIView):
 class Home(APIView):
     def get(self, request):
         content = Category.objects.annotate()
-        print("sipfjworj")
         return Response({"categories":CategorySerializer(content, many=True).data})
     
 class CategoriesIndex(APIView):
     serializer_class = CategorySerializer
     categories = Category.objects.all()
     categories3 = Category.objects.filter(hierarchy=3)
-    # gemeni_ai(newCat="ui/ux" , categories=categories3)
     def get(self, request):
         try:
             queryset = Category.objects.filter(hierarchy=1)
@@ -207,6 +214,7 @@ class CategoryDetail(APIView):
             updated_categories = self.serializer_class(queryset, many=True).data
             return Response(updated_categories, status=status.HTTP_200_OK)
         except Exception as err:
+            print(err)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
         
@@ -217,20 +225,52 @@ class CategoryLessons(APIView):
         lesson_categoy_results = lesson_category_check(request.data, category)
         if not lesson_categoy_results['belongs'] :
             return Response({"failed":"failed"})        
+        
         categories = {
         "grandparent-category": category.parent.parent.__str__(),
         "parent-category": category.parent.__str__(),
         "child-category_current": category.__str__()
         }
         skill_results = update_skill_score(request.data, categories)
-    
         data = request.data.copy()
         data["score"] = skill_results['score']
+        
+        # update rating for current category and parent category
+        parent_category = category.parent
+        siblings = [ {"category": cat.__str__(), "rating": cat.rating} for cat in parent_category.children.all() if cat.id != category.id]
+        categories_for_rating = {
+            "current_category": {
+                "name": category.__str__(),
+                "rating": category.rating
+            },
+            "parent_category": {
+                "name": parent_category.__str__(),
+                "rating": parent_category.rating
+            },
+            "sibling_categories": siblings
+        }
+        
+        previous_lessons = [ {"title" : lesson.title, "content": lesson.content, "score": lesson.score} for lesson in Lesson.objects.filter(user=request.user, category=category_id) ]
+        new_lesson_info = {
+            "title": data['title'],
+            "content": data['content'],
+            "score": data['score']
+        }
+        lessons_for_rating = {
+            "new_lesson_info": new_lesson_info,
+            "previous_lessons": previous_lessons
+        }
+        rating_results = update_category_rating(categories_for_rating, lessons_for_rating)
+        print("Rating results:", rating_results)
         
         try:
             serializer = self.serializer_class(data=data)
             if serializer.is_valid():
                 serializer.save(user_id=request.user.id)
+                category.rating = rating_results['current_category_rating']
+                category.save()
+                parent_category.rating = rating_results['parent_category_rating']
+                parent_category.save()
                 category_serialized = CategorySerializer(category)
                 queryset =  Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
