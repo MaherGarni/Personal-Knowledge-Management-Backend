@@ -24,7 +24,6 @@ class UserSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     parent = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), allow_null=True, required=False)
     children=serializers.SerializerMethodField()
-    # lessons = LessonSerializer(many=True, read_only=True)
     
     class Meta:
         model = Category

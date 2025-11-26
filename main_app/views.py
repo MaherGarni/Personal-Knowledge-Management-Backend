@@ -326,7 +326,10 @@ class VerifyUserView(APIView):
 class DashboardIndex(APIView):
     def get(self, request):
         try:
-            total_skills = len(Category.objects.filter(hierarchy=3))
+            total_skills = Category.objects.filter(hierarchy=3).count()
+            mastered_skills = Category.objects.filter(hierarchy=3, rating__gte=80).count()
+            in_progress_skills = total_skills - mastered_skills
+            total_lessons = Lesson.objects.filter(user=request.user).count()
             data =  [
                 {
                     "name": "Total Skills",
@@ -337,23 +340,23 @@ class DashboardIndex(APIView):
                 {
                     "name": "In Progress",
                     "icon": "TrendingUp",
-                    "data": 5,
+                    "data": in_progress_skills,
                     "description": "Currently learning"
                 },  
                 {
                     "name": "Mastered Skills",
                     "icon": "Award",
-                    "data": 19,
-                    "description": "Skills mastered"
+                    "data": mastered_skills,
+                    "description": "Skills mastered (Editted)"
                 },
                 {
-                    "name": "ai",
+                    "name": "Lessons",
                     "icon": "BookOpen",
-                    "data": 12,
+                    "data": total_lessons,
                     "description": "Total entries"
                     }
                 ]
-            return Response({'test_data': data}, status=status.HTTP_200_OK)
+            return Response({'user_data': data}, status=status.HTTP_200_OK)
         except Exception as err:
             return Response({'error':str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
