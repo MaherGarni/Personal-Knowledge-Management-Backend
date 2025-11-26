@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 # new import!
 from django.contrib.auth import authenticate
-
+from rest_framework.permissions import AllowAny
 
 
 
@@ -323,4 +323,38 @@ class VerifyUserView(APIView):
         except Exception as err:
             return Response({"detail": "Unexpected error occurred.", "error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class DashboardIndex(APIView):
+    def get(self, request):
+        try:
+            total_skills = len(Category.objects.filter(hierarchy=3))
+            data =  [
+                {
+                    "name": "Total Skills",
+                    "icon": "Target",
+                    "data": total_skills,
+                    "description": "Across all categories"
+                },
+                {
+                    "name": "In Progress",
+                    "icon": "TrendingUp",
+                    "data": 5,
+                    "description": "Currently learning"
+                },  
+                {
+                    "name": "Mastered Skills",
+                    "icon": "Award",
+                    "data": 19,
+                    "description": "Skills mastered"
+                },
+                {
+                    "name": "ai",
+                    "icon": "BookOpen",
+                    "data": 12,
+                    "description": "Total entries"
+                    }
+                ]
+            return Response({'test_data': data}, status=status.HTTP_200_OK)
+        except Exception as err:
+            return Response({'error':str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
         
