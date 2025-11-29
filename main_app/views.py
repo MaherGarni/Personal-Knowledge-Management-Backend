@@ -330,7 +330,8 @@ class DashboardIndex(APIView):
             mastered_skills = Category.objects.filter(hierarchy=3, rating__gte=80).count()
             in_progress_skills = total_skills - mastered_skills
             total_lessons = Lesson.objects.filter(user=request.user).count()
-            data =  [
+            category_technical_mastery= Category.objects.get(name="Technical Mastery")
+            stats =  [
                 {
                     "name": "Total Skills",
                     "icon": "Target",
@@ -347,7 +348,7 @@ class DashboardIndex(APIView):
                     "name": "Mastered Skills",
                     "icon": "Award",
                     "data": mastered_skills,
-                    "description": "Skills mastered (Editted)"
+                    "description": "Skills mastered"
                 },
                 {
                     "name": "Lessons",
@@ -356,8 +357,9 @@ class DashboardIndex(APIView):
                     "description": "Total entries"
                     }
                 ]
-            return Response({'user_data': data}, status=status.HTTP_200_OK)
+            return Response({'userStats': stats, 'technicalMasteryOverview':category_technical_mastery.children.all().values('name', 'rating')}, status=status.HTTP_200_OK)
         except Exception as err:
+            print(err)
             return Response({'error':str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         
