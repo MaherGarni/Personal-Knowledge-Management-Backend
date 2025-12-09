@@ -118,9 +118,9 @@ class CreateUserView(generics.CreateAPIView):
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
             data = {
-        	    'refresh': str(refresh),
-        	    'access': str(refresh.access_token),
-        	    'user': UserSerializer(user).data
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': UserSerializer(user).data
             }
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as err:
@@ -331,6 +331,9 @@ class DashboardIndex(APIView):
             in_progress_skills = total_skills - mastered_skills
             total_lessons = Lesson.objects.filter(user=request.user).count()
             category_technical_mastery= Category.objects.get(name="Technical Mastery")
+            category_soft_skills= Category.objects.get(name="Soft & Interpersonal Skills")
+            category_personal_skills= Category.objects.get(name="Personal & Habitual Skills")
+            
             stats =  [
                 {
                     "name": "Total Skills",
@@ -357,7 +360,12 @@ class DashboardIndex(APIView):
                     "description": "Total entries"
                     }
                 ]
-            return Response({'userStats': stats, 'technicalMasteryOverview':category_technical_mastery.children.all().values('name', 'rating')}, status=status.HTTP_200_OK)
+            
+            return Response({'userStats': stats,
+                            'technicalMasteryOverview': category_technical_mastery.children.all().values('name', 'rating'),
+                            'softSkillsOverview': category_soft_skills.children.all().values('name', 'rating'),
+                            'personalSkillsOverview': category_personal_skills.children.all().values('name', 'rating')}, 
+                            status=status.HTTP_200_OK)
         except Exception as err:
             print(err)
             return Response({'error':str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
