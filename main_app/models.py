@@ -24,6 +24,7 @@ class Lesson(models.Model):
     updated_at = models.DateTimeField(auto_now = True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     score = models.IntegerField(default=0)
+    points = models.IntegerField(default=0)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     
     class Meta:

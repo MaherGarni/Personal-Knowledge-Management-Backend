@@ -32,7 +32,18 @@ grading_rubric = {
     "91-100": "**Exceptional / Innovator** - Learner is capable of redefining or transforming the domain. Demonstrates creativity, foresight, and mastery beyond standard expectations.",
 }
 
-
+advancement_rubric = {
+    "1-10":   "**Foundational** - Core definitions, basic terminology, and introductory concepts. No prior knowledge required to understand the topic.",
+    "11-20":  "**Basic** - Simple, well-documented concepts with clear steps. Requires little to no background knowledge.",
+    "21-30":  "**Elementary** - Slightly more involved but still straightforward. Requires understanding of foundational concepts first.",
+    "31-40":  "**Lower Intermediate** - Topics that require combining multiple basic concepts. Some ambiguity in how to approach them.",
+    "41-50":  "**Intermediate** - Requires solid foundational knowledge. Multiple valid approaches exist and context starts to matter.",
+    "51-60":  "**Upper Intermediate** - Nuanced topics where tradeoffs and context significantly affect the right approach.",
+    "61-70":  "**Advanced** - Complex topics requiring deep understanding of underlying principles, not just surface knowledge.",
+    "71-80":  "**Highly Advanced** - Topics that combine multiple domains or require significant experience to reason about correctly.",
+    "81-90":  "**Expert-Level** - Highly specialized topics requiring synthesis of knowledge across multiple areas. Few clear resources exist.",
+    "91-100": "**Pioneering** - Research-level or domain-redefining topics. Requires mastery of the entire field to engage with meaningfully.",
+}
 
 def gemini_AI(prompt):
     
@@ -42,8 +53,7 @@ def gemini_AI(prompt):
 
         Your responsibilities include:
         • Classifying lessons into the correct skill categories
-        • Evaluating skill level based on the current lesson learned and parent / grandparent categories. The lesson and categories will be provided.
-        • Evaluate category rating based on lessons provided. 
+        • Scoring learner's lessons based on how well learner demonstareted understanding. plus how advance the topic is.  
         • Assessing growth of lessons overtime when prompted to do so.
 
         Rules:
@@ -55,14 +65,16 @@ def gemini_AI(prompt):
     config = GenerateContentConfig(
         system_instruction=system_instruction,
         temperature=0.3,
+        response_mime_type="application/json"
     )
     response = client.models.generate_content(
-            model='gemini-2.5-flash-lite',  # Use a suitable model for the task
+            model='gemini-3.1-flash-lite-preview',  # Use a suitable model for the task
             contents=prompt,
             config=config
         )
 
-    return json.loads(response.text[7:-4])
+
+    return json.loads(response.text)
     
     
 def lesson_category_check(lesson, category):
@@ -82,6 +94,37 @@ def lesson_category_check(lesson, category):
         """
     results = gemini_AI(prompt)
     return results
+
+def lesson_score(lesson, categories):
+    prompt = f"""I'm providing you with a lesson and your job is to evaluate two things: 
+                - how well learner demonstrated understanding of the lesson provided, considering the categories it falls under. 
+                - How advance the topic is, based on the categories it falls under. 
+                
+                you'll be provided with the lesson's title and content, and the categories it belongs to (including the parent category and grandparent category).
+                As well as the advancement rubric to evaluate the advancement level of the topic of the lesson.
+                
+                lesson's info :
+                title : {lesson['title']}
+                content : {lesson['content']}
+                
+                lesson's categories : {categories}
+                
+                advancement_rubric : {advancement_rubric}
+                
+                Return a JSON object like this:
+                {{
+                    "score": number (between 1-100, whole number)
+                    "advancement_level": number (between 1-100, whole number)
+                }}
+                
+                these two numbers will then be used to evaluate the points the lesson will be worth, to then update skill rating the lesson belongs to. the points will be evaluated manually you don't have to return it.
+                """
+            
+    results = gemini_AI(prompt)
+    
+    results['points'] = (results['score'] / 100) * results['advancement_level'] * 1.5 
+    return results
+    
 
 def update_skill_score(lesson, categories):
     prompt = f""" I am going to provide you with a scoring rubric that is used to judge all lessons being created within a 
@@ -105,6 +148,11 @@ def update_category_rating(categories, lessons):
             """
     results = gemini_AI(prompt)
     return results
+
+def update_category_rating_v2(categories, lessons):
+    # 'current_category_rating'
+    # 'parent_category_rating'
+    pass
 
 # User Registration
 class CreateUserView(generics.CreateAPIView):
@@ -225,15 +273,18 @@ class CategoryLessons(APIView):
         lesson_categoy_results = lesson_category_check(request.data, category)
         if not lesson_categoy_results['belongs'] :
             return Response({"failed":"failed"})        
-        
+
         categories = {
         "grandparent-category": category.parent.parent.__str__(),
         "parent-category": category.parent.__str__(),
         "child-category_current": category.__str__()
         }
-        skill_results = update_skill_score(request.data, categories)
+        
+        lesson_results =lesson_score(request.data, categories)
+        # skill_results = update_skill_score(request.data, categories)
         data = request.data.copy()
-        data["score"] = skill_results['score']
+        data["score"] = lesson_results['score']
+        data["points"] = lesson_results['points']
         
         # update rating for current category and parent category
         parent_category = category.parent
@@ -251,15 +302,20 @@ class CategoryLessons(APIView):
         }
         
         previous_lessons = [ {"title" : lesson.title, "content": lesson.content, "score": lesson.score} for lesson in Lesson.objects.filter(user=request.user, category=category_id) ]
+        
         new_lesson_info = {
             "title": data['title'],
             "content": data['content'],
-            "score": data['score']
+            "score": data['score'],
+            "points": data['points']
         }
+        
         lessons_for_rating = {
             "new_lesson_info": new_lesson_info,
             "previous_lessons": previous_lessons
         }
+        
+        print("Categories for rating:", categories_for_rating, "Lessons for rating:", lessons_for_rating, "line 172")
         rating_results = update_category_rating(categories_for_rating, lessons_for_rating)
         print("Rating results:", rating_results)
         
@@ -310,7 +366,7 @@ class LessonDetail(APIView):
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
-# User Verification
+
 class VerifyUserView(APIView):
     def get(self, request):
         try:
