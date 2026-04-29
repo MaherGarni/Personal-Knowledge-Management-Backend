@@ -1,3 +1,5 @@
+from unicodedata import category
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status
@@ -122,35 +124,14 @@ def lesson_score(lesson, categories):
             
     results = gemini_AI(prompt)
     
-    results['points'] = (results['score'] / 100) * results['advancement_level'] * 1.5 
+    results['points'] = int((results['score'] / 100) * results['advancement_level'] * 1.5)
     return results
     
-
-def update_skill_score(lesson, categories):
-    prompt = f""" I am going to provide you with a scoring rubric that is used to judge all lessons being created within a 
-            catgeory. Based on the lesson that the user has described having learned and the categories that the lesson is 
-            related, judge the current lesson. Return a json object with the score: like this: {{ "score": number}}. 
-            Grading rubric: {grading_rubric}. Lesson to grade: {lesson} Lesson categories: {categories}"""
-            
-    results = gemini_AI(prompt)
-    return results
-
-def update_category_rating(categories, lessons):
-    prompt = f""" You are to evaluate the overall rating of a Level 3 category, and it's parent level 2 category, and the evaluation will be based on the following:
-            - for level 3 category (I refer to it as skill) you will be provided with list of lessons that belong to that category. Each lesson will include lesson's title, content, and score.
-            Evaluate the overall rating of the level 3 category based on the average score of all lessons within that category.
-            - for the parent level 2 category you will be provided with list of level 3 categories includeing the one being evaluated. Each level 3 category will include its name and overall rating.
-            Evaluate the overall rating of the level 2 category based on the average rating of all its level 3 categories.
-            Note that the parent category rating should include the updated rating of the current category after including the new lesson.
-            
-            Return a json object like this:{{ "current_category_rating": number, "parent_category_rating": number}}
-            Grading rubric: {grading_rubric}. Categories include (current_category, parent_category, parent_categories and their ratings):{categories}. Lessons to grade current category: {lessons}. 
-            """
-    results = gemini_AI(prompt)
-    return results
-
-def update_parent_category_rating(parent_category):
-    return sum(category.rating for category in parent_category.children.all()) // parent_category.children.all().count() # used // to make it as integer. 
+def update_parent_category_rating(category):
+    parent_category = category.parent    
+    parent_category.rating = sum(child.rating for child in parent_category.children.all()) // parent_category.children.all().count() # used // to make it as integer. 
+    parent_category.save()
+    return 
 
 # User Registration
 class CreateUserView(generics.CreateAPIView):
@@ -267,11 +248,7 @@ class CategoryDetail(APIView):
 class CategoryLessons(APIView):
     serializer_class = LessonSerializer
     def post(self, request, category_id):
-        
         category = get_object_or_404(Category, id=category_id)
-        parent_category = category.parent
-        print(update_parent_category_rating(parent_category), "line273")
-        return Response({"failed":"failed"})      
         lesson_categoy_results = lesson_category_check(request.data, category)
         if not lesson_categoy_results['belongs'] :
             return Response({"failed":"failed"})     
@@ -282,62 +259,29 @@ class CategoryLessons(APIView):
         "child-category_current": category.__str__()
         }
         
-        lesson_results =lesson_score(request.data, categories)
-        # skill_results = update_skill_score(request.data, categories)
+        lesson_results = lesson_score(request.data, categories)
         data = request.data.copy()
         data["score"] = lesson_results['score']
         data["points"] = lesson_results['points']
-        
-        # update rating for current category and parent category
-          
-        # siblings = [ {"category": cat.__str__(), "rating": cat.rating} for cat in parent_category.children.all() if cat.id != category.id]
-        # categories_for_rating = {
-        #     "current_category": {
-        #         "name": category.__str__(),
-        #         "rating": category.rating
-        #     },
-        #     "parent_category": {
-        #         "name": parent_category.__str__(),
-        #         "rating": parent_category.rating
-        #     },
-        #     "sibling_categories": siblings
-        # }
-        
-        # previous_lessons = [ {"title" : lesson.title, "content": lesson.content, "score": lesson.score} for lesson in Lesson.objects.filter(user=request.user, category=category_id) ]
-        
-        # new_lesson_info = {
-        #     "title": data['title'],
-        #     "content": data['content'],
-        #     "score": data['score'],
-        #     "points": data['points']
-        # }
-        
-        # lessons_for_rating = {
-        #     "new_lesson_info": new_lesson_info,
-        #     "previous_lessons": previous_lessons
-        # }
-        
-        # print("Categories for rating:", categories_for_rating, "Lessons for rating:", lessons_for_rating, "line 172")
-        # rating_results = update_category_rating(categories_for_rating, lessons_for_rating)
-        # print("Rating results:", rating_results)
-        
-        
+                
         try:
             serializer = self.serializer_class(data=data)
             if serializer.is_valid():
                 serializer.save(user_id=request.user.id)
-                category.rating += serializer.data['points']
+                
+                category.rating = min( category.rating + serializer.data['points'], 100 )# to make sure the rating doesn't exceed 100.
                 category.save()
-                update_parent_category_rating(parent_category)
-                # parent_category.rating +=  
-                parent_category.save()
+                update_parent_category_rating(category)
+                
                 category_serialized = CategorySerializer(category)
                 queryset =  Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                 "category": category_serialized.data,
                 "lessons": serializer.data
-            }, status=status.HTTP_200_OK)
+                }, status=status.HTTP_200_OK)
+                
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
@@ -347,6 +291,18 @@ class LessonDetail(APIView):
     def put(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
+            # category = get_object_or_404(Category, id=category_id)
+            # lesson_categoy_results = lesson_category_check(lesson, category)
+            # if not lesson_categoy_results['belongs'] :
+            #     return Response({"failed":"failed"})  
+            
+            
+            # categories = {
+            # "grandparent-category": category.parent.parent.__str__(),
+            # "parent-category": category.parent.__str__(),
+            # "child-category_current": category.__str__()
+            # }
+            
             serializer = self.serializer_class(lesson, data=request.data)
             if serializer.is_valid():
                 serializer.save()
