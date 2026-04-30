@@ -124,7 +124,7 @@ def lesson_score(lesson, categories):
             
     results = gemini_AI(prompt)
     
-    results['points'] = int((results['score'] / 100) * results['advancement_level'] * 1.5)
+    results['points'] = min(int((results['score'] / 100) * results['advancement_level'] * 1.5), 30) # the 1.5 multiplier is to make sure the points are more spread out across the range, and the min with 30 is to make sure the points don't exceed 30.
     return results
     
 def update_parent_category_rating(category):
@@ -269,7 +269,7 @@ class CategoryLessons(APIView):
             if serializer.is_valid():
                 serializer.save(user_id=request.user.id)
                 
-                category.rating = min( category.rating + serializer.data['points'], 100 )# to make sure the rating doesn't exceed 100.
+                category.rating = min( category.rating + serializer.data['points'], 100 ) # to make sure the rating doesn't exceed 100.
                 category.save()
                 update_parent_category_rating(category)
                 
@@ -289,26 +289,42 @@ class LessonDetail(APIView):
     serializer_class = LessonSerializer
     
     def put(self, request, category_id, lesson_id):
+        category = get_object_or_404(Category, id=category_id)
+        lesson_categoy_results = lesson_category_check(request.data, category) # check if the updated lesson still belongs to the same category.
+        if not lesson_categoy_results['belongs']:
+            return Response({"failed":"failed"})  
+        
+        categories = {
+            "grandparent-category": category.parent.parent.__str__(),
+            "parent-category": category.parent.__str__(),
+            "child-category_current": category.__str__()
+            }
+        
+        updated_lesson_results = lesson_score(request.data, categories)
+        data = request.data.copy()
+        data["score"] = updated_lesson_results['score']
+        data["points"] = updated_lesson_results['points']    
+        
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
-            # category = get_object_or_404(Category, id=category_id)
-            # lesson_categoy_results = lesson_category_check(lesson, category)
-            # if not lesson_categoy_results['belongs'] :
-            #     return Response({"failed":"failed"})  
-            
-            
-            # categories = {
-            # "grandparent-category": category.parent.parent.__str__(),
-            # "parent-category": category.parent.__str__(),
-            # "child-category_current": category.__str__()
-            # }
-            
-            serializer = self.serializer_class(lesson, data=request.data)
+            old_points = lesson.points
+            print("old points", old_points)
+            serializer = self.serializer_class(lesson, data=data)
             if serializer.is_valid():
                 serializer.save()
+                
+                print("new points", serializer.data['points'])
+                print("category rating before update", category.rating)
+                category.rating = min( category.rating + (serializer.data['points'] - old_points), 100 ) # to make sure rating doesn't exceed 100.
+                category.save()
+                update_parent_category_rating(category)
+                
+                print("category rating after update", category.rating)
+                
                 queryset = Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
+                    "category": CategorySerializer(category).data,
                     "lessons":serializer.data,
                     "lesson": LessonSerializer(lesson).data}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -318,11 +334,23 @@ class LessonDetail(APIView):
     def delete(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
+            print("lesson to delete", lesson)
+            lesson_points = lesson.points
+            print("lesson points", lesson_points, type(lesson_points))
             lesson.delete()
+            
+            category = get_object_or_404(Category, id=category_id)
+            category.rating = max(( category.rating - lesson_points), 0 ) # to make sure the rating doesn't go below 0.
+            category.save()
+            update_parent_category_rating(category)
+            
             queryset = Lesson.objects.filter(user=request.user, category=category_id)
             serializer = self.serializer_class(queryset, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response({
+                "category": CategorySerializer(category).data,
+                "lessons": serializer.data}, status=status.HTTP_200_OK)
         except Exception as err:
+            print(err)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
