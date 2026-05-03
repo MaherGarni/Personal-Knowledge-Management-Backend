@@ -21,19 +21,6 @@ from rest_framework.permissions import AllowAny
 
 client = genai.Client()
 
-grading_rubric = {
-    "1-10":   "**Novice / Beginner** - Learner is just starting. Understands basic concepts but requires guidance to perform even simple tasks. Mistakes are frequent.",
-    "11-20":  "**Very Low Proficiency** - Learner can perform extremely simple tasks independently, but relies on examples or templates. Very limited problem-solving ability.",
-    "21-30":  "**Low Proficiency** - Learner can complete simple tasks with some confidence. Beginning to recognize patterns and make small adjustments without direct help.",
-    "31-40":  "**Basic / Elementary** - Learner performs basic tasks independently. Can follow instructions and replicate known patterns, but struggles with new or unexpected challenges.",
-    "41-50":  "**Moderate / Intermediate** - Learner handles common tasks reliably. Can apply knowledge to slightly unfamiliar situations. Mistakes are occasional and usually minor.",
-    "51-60":  "**Competent** - Learner demonstrates consistent understanding. Can troubleshoot standard problems and adapt existing knowledge to new contexts.",
-    "61-70":  "**Advanced** - Learner shows strong skill. Handles complex or multi-step tasks with minimal guidance. Begins to innovate or optimize processes.",
-    "71-80":  "**Highly Skilled / Expert** - Learner can manage complex challenges independently. Recognizes subtleties and nuances in the skill. Can guide or mentor others.",
-    "81-90":  "**Master** - Learner demonstrates deep understanding. Can tackle novel problems and create new approaches. Rarely makes mistakes.",
-    "91-100": "**Exceptional / Innovator** - Learner is capable of redefining or transforming the domain. Demonstrates creativity, foresight, and mastery beyond standard expectations.",
-}
-
 advancement_rubric = {
     "1-10":   "**Foundational** - Core definitions, basic terminology, and introductory concepts. No prior knowledge required to understand the topic.",
     "11-20":  "**Basic** - Simple, well-documented concepts with clear steps. Requires little to no background knowledge.",
@@ -46,6 +33,62 @@ advancement_rubric = {
     "81-90":  "**Expert-Level** - Highly specialized topics requiring synthesis of knowledge across multiple areas. Few clear resources exist.",
     "91-100": "**Pioneering** - Research-level or domain-redefining topics. Requires mastery of the entire field to engage with meaningfully.",
 }
+
+def seed_user(user):
+    category_level_1 = [
+            { 'name' : 'Technical Mastery',             'parent': None, 'color': "#A5C3F0", 'hierarchy': 1, 'rating': 0, 'user': user },
+            { 'name' : 'Soft & Interpersonal Skills',   'parent': None, 'color': '#FCD34D', 'hierarchy': 1, 'rating': 0, 'user': user },
+            { 'name' : 'Personal & Habitual Skills',    'parent': None, 'color': '#86EFAC', 'hierarchy': 1, 'rating': 0, 'user': user } 
+            ]
+    
+    for category_data in category_level_1:
+        Category.objects.create(**category_data)
+    
+    category_technical_mastery = Category.objects.get(name='Technical Mastery', user=user)
+    category_soft_skills = Category.objects.get(name='Soft & Interpersonal Skills', user=user)
+    category_personal_skills = Category.objects.get(name='Personal & Habitual Skills', user=user)
+    
+    technical_mastery_categories = [
+            { 'name' : 'Core Programming & CS Fundamentals',   'parent': category_technical_mastery, 'color': '#aec7e8', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Frontend Development',                 'parent': category_technical_mastery, 'color': '#1f77b4', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Backend Development',                  'parent': category_technical_mastery, 'color': '#17becf', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Software Design & Architecture',       'parent': category_technical_mastery, 'color': '#c7c7c7', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Cloud, DevOps & Infrastructure',       'parent': category_technical_mastery, 'color': '#9467bd', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Testing & Quality Assurance',          'parent': category_technical_mastery, 'color': '#8c564b', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Databases & Data Management',          'parent': category_technical_mastery, 'color': '#e377c2', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'AI / Machine Learning & Data Skills',  'parent': category_technical_mastery, 'color': '#7f7f7f', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Security & Cybersecurity Awareness',   'parent': category_technical_mastery, 'color': '#bcbd22', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'System Design & Scalability',          'parent': category_technical_mastery, 'color': '#ffbb78', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Software Engineering Practices',       'parent': category_technical_mastery, 'color': '#d62728', 'hierarchy': 2, 'rating': 0, 'user': user },
+            ] 
+
+    soft_skills_categories = [ 
+            { 'name' : 'Communication Skills',                 'parent': category_soft_skills, 'color': '#ff9896', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Collaboration & Teamwork',             'parent': category_soft_skills, 'color': '#c49c94', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Problem Solving & Critical Thinking',  'parent': category_soft_skills, 'color': '#f7b6d2', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Leadership',                           'parent': category_soft_skills, 'color': '#dbdb8d', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Time & Task Management',               'parent': category_soft_skills, 'color': '#9edae5', 'hierarchy': 2, 'rating': 0, 'user': user },
+            ]
+    
+    personal_skills_categories = [
+            { 'name' : 'Deep Work & Focus',                    'parent': category_personal_skills, 'color': '#17becf', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Discipline & Consistency',             'parent': category_personal_skills, 'color': '#bcbd22', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Professionalism & Work Ethics',        'parent': category_personal_skills, 'color': '#ff9896', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Documentation & Knowledge Management', 'parent': category_personal_skills, 'color': '#c5b0d5', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Self-Reflection & Improvement',        'parent': category_personal_skills, 'color': '#ff7f0e', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Mental & Physical Well-being',         'parent': category_personal_skills, 'color': '#2ca02c', 'hierarchy': 2, 'rating': 0, 'user': user },
+            { 'name' : 'Curiosity & Continuous Learning',      'parent': category_personal_skills, 'color': '#8c564b', 'hierarchy': 2, 'rating': 0, 'user': user },
+            ]
+    
+    for category_data in technical_mastery_categories:
+        Category.objects.create(**category_data)
+        
+    for category_data in soft_skills_categories:
+        Category.objects.create(**category_data)
+    
+    for category_data in personal_skills_categories:
+        Category.objects.create(**category_data)
+        
 
 def gemini_AI(prompt):
     
@@ -128,10 +171,11 @@ def lesson_score(lesson, categories):
     return results
     
 def update_parent_category_rating(category):
-    parent_category = category.parent    
-    parent_category.rating = sum(child.rating for child in parent_category.children.all()) // parent_category.children.all().count() # used // to make it as integer. 
+    parent_category = category.parent 
+    parent_category.rating = sum(child.rating for child in parent_category.children.all()) // parent_category.children.all().count() if parent_category.children.all().count() > 0  else  0 # to avoid division by zero
     parent_category.save()
-    return 
+        
+
 
 # User Registration
 class CreateUserView(generics.CreateAPIView):
@@ -144,6 +188,9 @@ class CreateUserView(generics.CreateAPIView):
             serializer.is_valid(raise_exception=True)
             user = serializer.save()
             refresh = RefreshToken.for_user(user)
+            
+            seed_user(user)  # Seed categories for the new user
+            
             data = {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
@@ -151,7 +198,7 @@ class CreateUserView(generics.CreateAPIView):
             }
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as err:
-            print(serializer.errors)
+            print(serializer.errors, 'line 170')
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
@@ -163,12 +210,12 @@ class LoginView(APIView):
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
             if user:
-                print(user)
                 refresh = RefreshToken.for_user(user)
                 content = {'refresh': str(refresh), 'access': str(refresh.access_token),'user': UserSerializer(user).data}
                 return Response(content, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as err:
+            print("Login error:", err)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Home(APIView):
@@ -182,7 +229,7 @@ class CategoriesIndex(APIView):
     categories3 = Category.objects.filter(hierarchy=3)
     def get(self, request):
         try:
-            queryset = Category.objects.filter(hierarchy=1)
+            queryset = Category.objects.filter(user=request.user, hierarchy=1)
             serializer = self.serializer_class(queryset, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as err:
@@ -190,26 +237,27 @@ class CategoriesIndex(APIView):
         
     def post(self, request):
         try:
-            serializer = self.serializer_class(data=request.data, context={'request': request})
+            data = request.data.copy()
+            data['user'] = request.user.id
+
+            serializer = self.serializer_class(data=data)
             if serializer.is_valid():
-                serializer.save()
-                updated_categories = Category.objects.filter(hierarchy=1)
+                serializer.save(user_id=request.user.id)
+                updated_categories = Category.objects.filter(hierarchy=1, user=request.user)
                 response_data = self.serializer_class(updated_categories, many=True)
                 return Response(response_data.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as err:
-            print("line whatever,",serializer.errors)
             return Response({'eroor':str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 class CategoryDetail(APIView):
     serializer_class = CategorySerializer   
-    lookup_field = 'id'
     
     def get(self, request, category_id):
         try:
             category = get_object_or_404(Category, id=category_id)
-            cat_lessons = Lesson.objects.filter(user=request.user, category=category_id)
-            serialized_lessons = LessonSerializer(cat_lessons, many=True)
+            category_lessons = Lesson.objects.filter(user=request.user, category=category_id)
+            serialized_lessons = LessonSerializer(category_lessons, many=True)
             serializer = self.serializer_class(category)
             return Response({
                 "category": serializer.data,
@@ -222,13 +270,15 @@ class CategoryDetail(APIView):
     def put(self, request, category_id):
         try:
             category = get_object_or_404(Category, id=category_id)
-            serializer = self.serializer_class(category, data=request.data)
+            data = request.data.copy()
+            data['user'] = request.user.id
+            
+            serializer = self.serializer_class(category, data=data)
             if serializer.is_valid():
                 serializer.save()
-                queryset = Category.objects.filter(hierarchy=1)
+                queryset = Category.objects.filter(hierarchy=1, user=request.user)
                 updated_categories = self.serializer_class(queryset, many=True).data
                 return Response(updated_categories, status=status.HTTP_200_OK)
-            print(serializer.errors, "line39")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -237,7 +287,8 @@ class CategoryDetail(APIView):
         try:
             category = get_object_or_404(Category, id=category_id)
             category.delete()
-            queryset = Category.objects.filter(hierarchy=1)
+            update_parent_category_rating(category)
+            queryset = Category.objects.filter(hierarchy=1, user=request.user)
             updated_categories = self.serializer_class(queryset, many=True).data
             return Response(updated_categories, status=status.HTTP_200_OK)
         except Exception as err:
@@ -268,6 +319,7 @@ class CategoryLessons(APIView):
             serializer = self.serializer_class(data=data)
             if serializer.is_valid():
                 serializer.save(user_id=request.user.id)
+                
                 
                 category.rating = min( category.rating + serializer.data['points'], 100 ) # to make sure the rating doesn't exceed 100.
                 category.save()
@@ -308,18 +360,13 @@ class LessonDetail(APIView):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
             old_points = lesson.points
-            print("old points", old_points)
             serializer = self.serializer_class(lesson, data=data)
             if serializer.is_valid():
                 serializer.save()
                 
-                print("new points", serializer.data['points'])
-                print("category rating before update", category.rating)
                 category.rating = min( category.rating + (serializer.data['points'] - old_points), 100 ) # to make sure rating doesn't exceed 100.
                 category.save()
                 update_parent_category_rating(category)
-                
-                print("category rating after update", category.rating)
                 
                 queryset = Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
@@ -334,9 +381,7 @@ class LessonDetail(APIView):
     def delete(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
-            print("lesson to delete", lesson)
             lesson_points = lesson.points
-            print("lesson points", lesson_points, type(lesson_points))
             lesson.delete()
             
             category = get_object_or_404(Category, id=category_id)
@@ -370,14 +415,14 @@ class VerifyUserView(APIView):
 class DashboardIndex(APIView):
     def get(self, request):
         try:
-            total_skills = Category.objects.filter(hierarchy=3).count()
-            mastered_skills = Category.objects.filter(hierarchy=3, rating__gte=80).count()
+            total_skills = Category.objects.filter(hierarchy=3, user=request.user).count()
+            mastered_skills = Category.objects.filter(hierarchy=3, user=request.user, rating__gte=80).count()
             in_progress_skills = total_skills - mastered_skills
             total_lessons = Lesson.objects.filter(user=request.user).count()
-            category_technical_mastery= Category.objects.get(name="Technical Mastery")
-            category_soft_skills= Category.objects.get(name="Soft & Interpersonal Skills")
-            category_personal_skills= Category.objects.get(name="Personal & Habitual Skills")
-            
+            category_technical_mastery= Category.objects.get(name="Technical Mastery", user=request.user)
+            category_soft_skills= Category.objects.get(name="Soft & Interpersonal Skills", user=request.user)
+            category_personal_skills= Category.objects.get(name="Personal & Habitual Skills", user=request.user)
+
             stats =  [
                 {
                     "name": "Total Skills",

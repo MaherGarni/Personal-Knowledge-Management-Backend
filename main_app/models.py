@@ -7,6 +7,7 @@ class Category(models.Model):
     color  = models.CharField(max_length=20, null=True)
     hierarchy = models.IntegerField()
     rating = models.IntegerField(default=0)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     
 
     class Meta:
