@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, Lesson, UserCategoryScore
+from .models import Category, Lesson, UserCategoryScore, UserProfile
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -36,6 +36,11 @@ class LessonSerializer(serializers.ModelSerializer):
     user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Lesson
+        fields = '__all__'
+    
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
         fields = '__all__'
         
         

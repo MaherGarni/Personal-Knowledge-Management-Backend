@@ -32,7 +32,13 @@ class Lesson(models.Model):
         ordering = ['-updated_at']
     def __str__(self):
         return f"{self.title}"
-    
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    daily_ai_limit = models.IntegerField(default=5) 
+    daily_calls_counter = models.IntegerField(default=0)
+
 class UserCategoryScore(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name="user_scores")

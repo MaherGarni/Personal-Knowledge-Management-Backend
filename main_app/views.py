@@ -3,8 +3,8 @@ from unicodedata import category
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status
-from .models import Category, Lesson
-from .serializers import CategorySerializer, LessonSerializer, UserSerializer
+from .models import Category, Lesson, UserProfile
+from .serializers import CategorySerializer, LessonSerializer, UserSerializer, UserProfileSerializer
 from django.shortcuts import get_object_or_404
 import os
 from google import genai
@@ -174,6 +174,13 @@ def update_parent_category_rating(category):
     parent_category = category.parent 
     parent_category.rating = sum(child.rating for child in parent_category.children.all()) // parent_category.children.all().count() if parent_category.children.all().count() > 0  else  0 # to avoid division by zero
     parent_category.save()
+    
+def update_user_limits(user, user_data):
+    user_limits = UserProfile.objects.get(user=user)
+    user_limits.daily_calls_counter += 1
+    user_limits.save()
+    user_data['dailyAiLimit'] = user_limits.daily_ai_limit
+    user_data['dailyCallsCounter'] = user_limits.daily_calls_counter
         
 
 
@@ -209,9 +216,13 @@ class LoginView(APIView):
             username = request.data.get('username')
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
+            user_data = UserSerializer(user).data
+            limits = UserProfile.objects.get(user=user)
+            user_data['dailyAiLimit'] = limits.daily_ai_limit
+            user_data['dailyCallsCounter'] = limits.daily_calls_counter
             if user:
                 refresh = RefreshToken.for_user(user)
-                content = {'refresh': str(refresh), 'access': str(refresh.access_token),'user': UserSerializer(user).data}
+                content = {'refresh': str(refresh), 'access': str(refresh.access_token),'user': user_data}
                 return Response(content, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as err:
@@ -298,7 +309,7 @@ class CategoryDetail(APIView):
         
 class CategoryLessons(APIView):
     serializer_class = LessonSerializer
-    def post(self, request, category_id):
+    def post(self, request, category_id):    
         category = get_object_or_404(Category, id=category_id)
         lesson_categoy_results = lesson_category_check(request.data, category)
         if not lesson_categoy_results['belongs'] :
@@ -325,12 +336,16 @@ class CategoryLessons(APIView):
                 category.save()
                 update_parent_category_rating(category)
                 
+                user_data = UserSerializer(request.user).data
+                update_user_limits(request.user, user_data)
+                
                 category_serialized = CategorySerializer(category)
                 queryset =  Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                 "category": category_serialized.data,
-                "lessons": serializer.data
+                "lessons": serializer.data,
+                "user": user_data
                 }, status=status.HTTP_200_OK)
                 
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
