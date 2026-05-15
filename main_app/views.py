@@ -16,8 +16,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 # new import!
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny
+from django.utils import timezone 
 
-
+daily_reset_time = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
 client = genai.Client()
 
@@ -34,6 +35,7 @@ advancement_rubric = {
     "91-100": "**Pioneering** - Research-level or domain-redefining topics. Requires mastery of the entire field to engage with meaningfully.",
 }
 
+
 def seed_user(user):
     category_level_1 = [
             { 'name' : 'Technical Mastery',             'parent': None, 'color': "#A5C3F0", 'hierarchy': 1, 'rating': 0, 'user': user },
@@ -45,8 +47,8 @@ def seed_user(user):
         Category.objects.create(**category_data)
     
     category_technical_mastery = Category.objects.get(name='Technical Mastery', user=user)
-    category_soft_skills = Category.objects.get(name='Soft & Interpersonal Skills', user=user)
-    category_personal_skills = Category.objects.get(name='Personal & Habitual Skills', user=user)
+    category_soft_skills       = Category.objects.get(name='Soft & Interpersonal Skills', user=user)
+    category_personal_skills   = Category.objects.get(name='Personal & Habitual Skills', user=user)
     
     technical_mastery_categories = [
             { 'name' : 'Core Programming & CS Fundamentals',   'parent': category_technical_mastery, 'color': '#aec7e8', 'hierarchy': 2, 'rating': 0, 'user': user },
@@ -122,6 +124,7 @@ def gemini_AI(prompt):
     return json.loads(response.text)
     
     
+    
 def lesson_category_check(lesson, category):
     prompt = f"""
                 Determine if the lesson fits the selected category. lesson don't have to match the category name exactly, 
@@ -169,18 +172,42 @@ def lesson_score(lesson, categories):
     
     results['points'] = min(int((results['score'] / 100) * results['advancement_level'] * 1.5), 30) # the 1.5 multiplier is to make sure the points are more spread out across the range, and the min with 30 is to make sure the points don't exceed 30.
     return results
+
     
 def update_parent_category_rating(category):
     parent_category = category.parent 
     parent_category.rating = sum(child.rating for child in parent_category.children.all()) // parent_category.children.all().count() if parent_category.children.all().count() > 0  else  0 # to avoid division by zero
     parent_category.save()
+
+
+def get_user_limits (user):
+    user_data = UserSerializer(user).data
+    user_limits, _ = UserProfile.objects.get_or_create(user=user)  # _ discard the second element returned from ger_or_create()
+    print(user_limits, 'line 181')
+    user_data['dailyAiLimit']= user_limits.daily_ai_limit
+    user_data['dailyCallsCounter']= user_limits.daily_calls_counter
+    return user_data
     
 def update_user_limits(user, user_data):
     user_limits = UserProfile.objects.get(user=user)
     user_limits.daily_calls_counter += 1
+    if user_limits.daily_calls_counter >= user_limits.daily_ai_limit:
+        user_limits.max_reached_date = timezone.now()
     user_limits.save()
     user_data['dailyAiLimit'] = user_limits.daily_ai_limit
     user_data['dailyCallsCounter'] = user_limits.daily_calls_counter
+    
+def check_reset_limit(user, user_data):
+    user_limits = UserProfile.objects.get(user=user)
+    if user_limits.max_reached_date < daily_reset_time :
+        user_limits.daily_calls_counter = 0
+        user_limits.save()
+        user_data['dailyAiLimit'] = user_limits.daily_ai_limit
+        user_data['dailyCallsCounter'] = user_limits.daily_calls_counter
+    
+        
+
+    
         
 
 
@@ -198,10 +225,12 @@ class CreateUserView(generics.CreateAPIView):
             
             seed_user(user)  # Seed categories for the new user
             
+            user_data = get_user_limits(user)
+            
             data = {
                 'refresh': str(refresh),
                 'access': str(refresh.access_token),
-                'user': UserSerializer(user).data
+                'user': user_data
             }
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as err:
@@ -216,10 +245,10 @@ class LoginView(APIView):
             username = request.data.get('username')
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
-            user_data = UserSerializer(user).data
-            limits = UserProfile.objects.get(user=user)
-            user_data['dailyAiLimit'] = limits.daily_ai_limit
-            user_data['dailyCallsCounter'] = limits.daily_calls_counter
+            
+            user_data = get_user_limits(user)
+            check_reset_limit(user, user_data)
+            
             if user:
                 refresh = RefreshToken.for_user(user)
                 content = {'refresh': str(refresh), 'access': str(refresh.access_token),'user': user_data}
@@ -383,12 +412,16 @@ class LessonDetail(APIView):
                 category.save()
                 update_parent_category_rating(category)
                 
+                user_data = UserSerializer(request.user).data
+                update_user_limits(request.user, user_data)
+                
                 queryset = Lesson.objects.filter(user=request.user, category=category_id)
                 serializer = self.serializer_class(queryset, many=True)
                 return Response({
                     "category": CategorySerializer(category).data,
                     "lessons":serializer.data,
-                    "lesson": LessonSerializer(lesson).data}, status=status.HTTP_200_OK)
+                    "lesson": LessonSerializer(lesson).data,
+                    "user" : user_data}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Exception as err:
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
