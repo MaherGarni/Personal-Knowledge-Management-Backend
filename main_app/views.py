@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 import os
 from google import genai
 from google.genai.types import GenerateContentConfig
+from google.genai.errors import ServerError
 import json
 # import User model, UserSerializer, and RefreshToken...
 from django.contrib.auth.models import User
@@ -17,6 +18,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny
 from django.utils import timezone 
+from django.db.models import F
+
 
 daily_reset_time = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
@@ -189,8 +192,8 @@ def get_user_limits (user):
     return user_data
     
 def update_user_limits(user, user_data):
+    UserProfile.objects.filter(user=user).update(daily_calls_counter=F('daily_calls_counter') + 1)
     user_limits = UserProfile.objects.get(user=user)
-    user_limits.daily_calls_counter += 1
     if user_limits.daily_calls_counter >= user_limits.daily_ai_limit:
         user_limits.max_reached_date = timezone.now()
     user_limits.save()
@@ -339,7 +342,7 @@ class CategoryDetail(APIView):
 class CategoryLessons(APIView):
     serializer_class = LessonSerializer
     def post(self, request, category_id):    
-        category = get_object_or_404(Category, id=category_id)
+        category = get_object_or_404(Category, id=category_id, )
         lesson_categoy_results = lesson_category_check(request.data, category)
         if not lesson_categoy_results['belongs'] :
             return Response({"failed":"failed"})     
@@ -376,10 +379,11 @@ class CategoryLessons(APIView):
                 "lessons": serializer.data,
                 "user": user_data
                 }, status=status.HTTP_200_OK)
-                
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as err:
-            return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except ServerError as ai_error:
+            return Response({"error": "ai_unavailable"}, status=503)
+        except Exception:
+            return Response({"error": "server_error"}, status=500)
         
 class LessonDetail(APIView):
     serializer_class = LessonSerializer
@@ -423,9 +427,11 @@ class LessonDetail(APIView):
                     "lesson": LessonSerializer(lesson).data,
                     "user" : user_data}, status=status.HTTP_200_OK)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Exception as err:
-            return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+        except ServerError as ai_error:
+            return Response({"error": "ai_unavailable"}, status=503)
+        except Exception:
+            return Response({"error": "server_error"}, status=500)    
+        
     def delete(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
