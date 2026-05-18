@@ -93,15 +93,14 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     "default": {
-        "ENGINE": os.environ.get("SQL_ENGINE", "django.db.backends.postgresql"),
-        "NAME": os.environ.get("SQL_DATABASE", BASE_DIR / "db.sqlite3"),
-        "USER": os.environ.get("SQL_USER", "user"),
-        "PASSWORD": os.environ.get("SQL_PASSWORD", "password"),
-        "HOST": os.environ.get("SQL_HOST", "localhost"),
-        "PORT": os.environ.get("SQL_PORT", "5432"),
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.environ.get("PGDATABASE"),
+        "USER": os.environ.get("PGUSER"),
+        "PASSWORD": os.environ.get("PGPASSWORD"),
+        "HOST": os.environ.get("PGHOST"),
+        "PORT": os.environ.get("PGPORT"),
     }
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
