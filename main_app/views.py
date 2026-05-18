@@ -19,6 +19,7 @@ from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny
 from django.utils import timezone 
 from django.db.models import F
+import sys
 
 
 daily_reset_time = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -257,7 +258,7 @@ class LoginView(APIView):
                 return Response(content, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as err:
-            print("Login error:", err)
+            print(str(err), flush=True, file=sys.stderr)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class Home(APIView):
