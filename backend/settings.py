@@ -31,7 +31,7 @@ load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env.dev'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
 
 CORS_ALLOW_ALL_ORIGINS=False
 CORS_ALLOW_HEADERS = '*'
@@ -101,14 +101,6 @@ DATABASES = {
         "PORT": os.environ.get("SQL_PORT", "5432"),
     }
 }
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'pkm_db',
-    }
-}
-
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
