@@ -238,6 +238,7 @@ class CreateUserView(generics.CreateAPIView):
             return Response(data, status=status.HTTP_201_CREATED)
         except Exception as err:
             print(serializer.errors, 'line 170')
+            print(str(err), flush=True, file=sys.stderr)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
