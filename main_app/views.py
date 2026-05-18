@@ -186,7 +186,6 @@ def update_parent_category_rating(category):
 def get_user_limits (user):
     user_data = UserSerializer(user).data
     user_limits, _ = UserProfile.objects.get_or_create(user=user)  # _ discard the second element returned from ger_or_create()
-    print(user_limits, 'line 181')
     user_data['dailyAiLimit']= user_limits.daily_ai_limit
     user_data['dailyCallsCounter']= user_limits.daily_calls_counter
     return user_data
