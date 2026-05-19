@@ -13,8 +13,13 @@ from datetime import timedelta
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from environ import Env
+
+
 #load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,8 +34,10 @@ load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env.dev'))
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+if ENVIRONMENT == 'development':
+    DEBUG = True
+else :
+    DEBUG = False
 ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
 
 CORS_ALLOW_ALL_ORIGINS=False
@@ -179,3 +186,8 @@ LOGGING = {
         'level': 'ERROR',
     },
 }
+
+
+ACCOUNT_USERNAME_BLACKLIST = [
+    "maher" 
+]
