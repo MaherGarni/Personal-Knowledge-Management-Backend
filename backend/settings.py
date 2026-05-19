@@ -14,6 +14,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from environ import Env
+import dj_database_url
 
 
 #load_dotenv()
@@ -38,7 +39,9 @@ if ENVIRONMENT == 'development':
     DEBUG = True
 else :
     DEBUG = False
-ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
+    
+#ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_ALL_ORIGINS=False
 CORS_ALLOW_HEADERS = '*'
@@ -98,16 +101,47 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": os.environ.get("PGDATABASE"),
+#         "USER": os.environ.get("PGUSER"),
+#         "PASSWORD": os.environ.get("PGPASSWORD"),
+#         "HOST": os.environ.get("PGHOST"),
+#         "PORT": os.environ.get("PGPORT"),
+#     }
+# }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'pkm_db',
+#     }
+# }
+
+
+#DATABASES = ['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
+# Database
+# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+
+# Set default values for the environment variables if they’re not already set
+os.environ.setdefault("PGDATABASE", "pkm_db")
+os.environ.setdefault("PGUSER", "maher_qarni")
+os.environ.setdefault("PGPASSWORD", "1122")
+os.environ.setdefault("PGHOST", "")
+os.environ.setdefault("PGPORT", "5432")
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("PGDATABASE"),
-        "USER": os.environ.get("PGUSER"),
-        "PASSWORD": os.environ.get("PGPASSWORD"),
-        "HOST": os.environ.get("PGHOST"),
-        "PORT": os.environ.get("PGPORT"),
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.environ["PGDATABASE"],
+        'USER': os.environ["PGUSER"],
+        'PASSWORD': os.environ["PGPASSWORD"],
+        'HOST': os.environ["PGHOST"],
+        'PORT': os.environ["PGPORT"],
     }
 }
+
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
