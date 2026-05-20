@@ -20,6 +20,7 @@ import dj_database_url
 #load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
+print('ayo')
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -48,7 +49,8 @@ CORS_ALLOW_HEADERS = '*'
 CORS_ALLOWED_ORIGINS=[
     "http://127.0.0.1:5173",
     "http://localhost:5173",
-    "https://personal-knowledge-management-front.vercel.app"
+    "https://personal-knowledge-management-front.vercel.app",
+    "https://personal-knowledge-management-frontend-b2ujhizt8.vercel.app"
 ]
 
 # Application definition
@@ -125,21 +127,28 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # Set default values for the environment variables if they’re not already set
-os.environ.setdefault("PGDATABASE", "pkm_db")
-os.environ.setdefault("PGUSER", "maher_qarni")
-os.environ.setdefault("PGPASSWORD", "1122")
-os.environ.setdefault("PGHOST", "")
-os.environ.setdefault("PGPORT", "5432")
+# os.environ.setdefault("PGDATABASE", "pkm_db")
+# os.environ.setdefault("PGUSER", "maher_qarni")
+# os.environ.setdefault("PGPASSWORD", "1122")
+# os.environ.setdefault("PGHOST", "")
+# os.environ.setdefault("PGPORT", "5432")
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': os.environ["PGDATABASE"],
+#         'USER': os.environ["PGUSER"],
+#         'PASSWORD': os.environ["PGPASSWORD"],
+#         'HOST': os.environ["PGHOST"],
+#         'PORT': os.environ["PGPORT"],
+#     }
+# }
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ["PGDATABASE"],
-        'USER': os.environ["PGUSER"],
-        'PASSWORD': os.environ["PGPASSWORD"],
-        'HOST': os.environ["PGHOST"],
-        'PORT': os.environ["PGPORT"],
-    }
+    'default': dj_database_url.config(
+        default='postgresql:///pkm_db',
+        conn_max_age=600
+    )
 }
 
 # Password validation

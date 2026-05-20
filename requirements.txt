@@ -4,6 +4,7 @@ asgiref==3.10.0
 cachetools==6.2.1
 certifi==2025.10.5
 charset-normalizer==3.4.4
+click==8.4.0
 distro==1.9.0
 dj-database-url==3.1.2
 Django==5.2.7
@@ -37,4 +38,5 @@ tqdm==4.67.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.5.0
+uvicorn==0.47.0
 websockets==15.0.1
