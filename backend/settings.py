@@ -101,7 +101,7 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-
+# if ENVIRONMENT == 'development':
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -109,14 +109,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #     }
 # }
 
-# if ENVIRONMENT == 'development':
-#     print("Using development database")
-#     print(dj_database_url.config(os.environ.get('DATABASE_URL_DEV')))
-#     DATABASES={ 'default': dj_database_url.config(
-#         default=os.environ.get('DATABASE_URL_DEV'),
-#         conn_max_age=600,
-#     )
-#     }
+
+DATABASES={ 'default': dj_database_url.config(
+    default=os.environ.get('DATABASE_URL'),
+    conn_max_age=600,
+)
+}
     
 
 # Password validation
