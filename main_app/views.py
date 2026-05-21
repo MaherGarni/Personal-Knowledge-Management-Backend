@@ -202,12 +202,12 @@ def update_user_limits(user, user_data):
     
 def check_reset_limit(user, user_data):
     user_limits = UserProfile.objects.get(user=user)
-    print(f"line 205: {str(user)}", flush=True, file=sys.stderr)
-    if user_limits.max_reached_date < daily_reset_time :
-        user_limits.daily_calls_counter = 0
-        user_limits.save()
-        user_data['dailyAiLimit'] = user_limits.daily_ai_limit
-        user_data['dailyCallsCounter'] = user_limits.daily_calls_counter
+    print(f"line 205: {str(user_limits)}", flush=True, file=sys.stderr)
+    # if user_limits.max_reached_date < daily_reset_time :
+    #     user_limits.daily_calls_counter = 0
+    #     user_limits.save()
+    #     user_data['dailyAiLimit'] = user_limits.daily_ai_limit
+    #     user_data['dailyCallsCounter'] = user_limits.daily_calls_counter
     
         
 
@@ -255,7 +255,7 @@ class LoginView(APIView):
                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
             
             user_data = get_user_limits(user)
-            # check_reset_limit(user, user_data)    
+            check_reset_limit(user, user_data)    
             
             if user:
                 refresh = RefreshToken.for_user(user)
