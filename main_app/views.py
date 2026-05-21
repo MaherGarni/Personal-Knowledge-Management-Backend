@@ -250,6 +250,9 @@ class LoginView(APIView):
             password = request.data.get('password')
             user = authenticate(username=username, password=password)
             
+            if user is None:
+                return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+            
             user_data = get_user_limits(user)
             check_reset_limit(user, user_data)
             

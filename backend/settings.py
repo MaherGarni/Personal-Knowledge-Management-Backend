@@ -20,7 +20,7 @@ import dj_database_url
 #load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
-print('ayo')
+
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -102,18 +102,6 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
-
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "django.db.backends.postgresql",
-#         "NAME": os.environ.get("PGDATABASE"),
-#         "USER": os.environ.get("PGUSER"),
-#         "PASSWORD": os.environ.get("PGPASSWORD"),
-#         "HOST": os.environ.get("PGHOST"),
-#         "PORT": os.environ.get("PGPORT"),
-#     }
-# }
-
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
@@ -121,35 +109,15 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #     }
 # }
 
-
-#DATABASES = ['default'] = dj_database_url.parse(os.environ.get('DATABASE_URL'))
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
-# Set default values for the environment variables if they’re not already set
-# os.environ.setdefault("PGDATABASE", "pkm_db")
-# os.environ.setdefault("PGUSER", "maher_qarni")
-# os.environ.setdefault("PGPASSWORD", "1122")
-# os.environ.setdefault("PGHOST", "")
-# os.environ.setdefault("PGPORT", "5432")
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': os.environ["PGDATABASE"],
-#         'USER': os.environ["PGUSER"],
-#         'PASSWORD': os.environ["PGPASSWORD"],
-#         'HOST': os.environ["PGHOST"],
-#         'PORT': os.environ["PGPORT"],
+# if ENVIRONMENT == 'development':
+#     print("Using development database")
+#     print(dj_database_url.config(os.environ.get('DATABASE_URL_DEV')))
+#     DATABASES={ 'default': dj_database_url.config(
+#         default=os.environ.get('DATABASE_URL_DEV'),
+#         conn_max_age=600,
+#     )
 #     }
-# }
-
-DATABASES = {
-    'default': dj_database_url.config(
-        default='postgresql:///pkm_db',
-        conn_max_age=600
-    )
-}
+    
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
