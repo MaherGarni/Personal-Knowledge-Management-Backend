@@ -254,7 +254,7 @@ class LoginView(APIView):
                 return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
             
             user_data = get_user_limits(user)
-            check_reset_limit(user, user_data)
+            # check_reset_limit(user, user_data)    
             
             if user:
                 refresh = RefreshToken.for_user(user)
