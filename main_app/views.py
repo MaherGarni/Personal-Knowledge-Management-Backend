@@ -202,6 +202,7 @@ def update_user_limits(user, user_data):
     
 def check_reset_limit(user, user_data):
     user_limits = UserProfile.objects.get(user=user)
+    print(f"line 205: {str(user)}", flush=True, file=sys.stderr)
     if user_limits.max_reached_date < daily_reset_time :
         user_limits.daily_calls_counter = 0
         user_limits.save()
