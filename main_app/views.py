@@ -6,7 +6,6 @@ from rest_framework import generics, status
 from .models import Category, Lesson, UserProfile
 from .serializers import CategorySerializer, LessonSerializer, UserSerializer, UserProfileSerializer
 from django.shortcuts import get_object_or_404
-import os
 from google import genai
 from google.genai.types import GenerateContentConfig
 from google.genai.errors import ServerError
@@ -193,16 +192,14 @@ def get_user_limits (user):
     
 def update_user_limits(user, user_data):
     UserProfile.objects.filter(user=user).update(daily_calls_counter=F('daily_calls_counter') + 1)
+    UserProfile.objects.filter(user=user).update(last_call_date=timezone.now())
     user_limits = UserProfile.objects.get(user=user)
-    if user_limits.daily_calls_counter >= user_limits.daily_ai_limit:
-        user_limits.max_reached_date = timezone.now()
-    user_limits.save()
     user_data['dailyAiLimit'] = user_limits.daily_ai_limit
     user_data['dailyCallsCounter'] = user_limits.daily_calls_counter
     
 def check_reset_limit(user, user_data):
     user_limits = UserProfile.objects.get(user=user)
-    if user_limits.max_reached_date and user_limits.max_reached_date < daily_reset_time :
+    if user_limits.last_call_date and user_limits.last_call_date < daily_reset_time :
         user_limits.daily_calls_counter = 0
         user_limits.save()
         user_data['dailyAiLimit'] = user_limits.daily_ai_limit
@@ -401,6 +398,7 @@ class CategoryLessons(APIView):
                 "lessons": serializer.data,
                 "user": user_data
                 }, status=status.HTTP_200_OK)
+            print(serializer.errors)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except ServerError as ai_error:
             return Response({"error": "ai_unavailable"}, status=503)

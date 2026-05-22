@@ -38,7 +38,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     daily_ai_limit = models.IntegerField(default=5) 
     daily_calls_counter = models.IntegerField(default=0)
-    max_reached_date = models.DateTimeField(null=True, blank=True)
+    last_call_date = models.DateTimeField(null=True, blank=True)
 
 class UserCategoryScore(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
