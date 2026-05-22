@@ -18,7 +18,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from rest_framework.permissions import AllowAny
 from django.utils import timezone 
-from django.db.models import F
+from django.db.models import F, Sum
 import sys
 
 
@@ -457,11 +457,12 @@ class LessonDetail(APIView):
     def delete(self, request, category_id, lesson_id):
         try:
             lesson = get_object_or_404(Lesson, id=lesson_id)
-            lesson_points = lesson.points
             lesson.delete()
+
+            category_total_points = Lesson.objects.filter(user=request.user, category=category_id).aggregate(Sum('points'))
             
             category = get_object_or_404(Category, id=category_id)
-            category.rating = max(( category.rating - lesson_points), 0 ) # to make sure the rating doesn't go below 0.
+            category.rating = min(category_total_points['points__sum'], 100 ) # to make sure rating don't exceed 100
             category.save()
             update_parent_category_rating(category)
             
