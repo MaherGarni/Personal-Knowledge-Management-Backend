@@ -264,6 +264,24 @@ class LoginView(APIView):
         except Exception as err:
             print(str(err), flush=True, file=sys.stderr)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+class VerifyUserView(APIView):
+    def get(self, request):
+        try:
+            user = User.objects.get(username=request.user.username)
+            try:
+                refresh = RefreshToken.for_user(user)
+                
+                user_data = get_user_limits(user)
+                check_reset_limit(user, user_data)  
+                
+                return Response({'refresh': str(refresh),'access': str(refresh.access_token),'user': user_data}, status=status.HTTP_200_OK)
+            except Exception as token_error:
+                return Response({"detail": "Failed to generate token.", "error": str(token_error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as err:
+            print(err)
+            return Response({"detail": "Unexpected error occurred.", "error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)        
 
 class Home(APIView):
     def get(self, request):
@@ -456,20 +474,7 @@ class LessonDetail(APIView):
             print(err)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
-
-
-class VerifyUserView(APIView):
-    def get(self, request):
-        try:
-            user = User.objects.get(username=request.user.username)
-            try:
-                refresh = RefreshToken.for_user(user)
-                return Response({'refresh': str(refresh),'access': str(refresh.access_token),'user': UserSerializer(user).data}, status=status.HTTP_200_OK)
-            except Exception as token_error:
-                return Response({"detail": "Failed to generate token.", "error": str(token_error)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as err:
-            return Response({"detail": "Unexpected error occurred.", "error": str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        
 class DashboardIndex(APIView):
     def get(self, request):
         try:
