@@ -1,43 +1,38 @@
 # Personal Knowledge Management App — Backend (Django)
 
-This backend powers a personal knowledge-tracking system designed to help users organize their learning and skill development.
-The system structures knowledge into three hierarchical levels: main topic → subtopic → skill, allowing users to add lessons for each skill and track progress over time.
+## Overview
 
-The backend handles:
-- User authentication & authorization
- 
-- Category and lesson CRUD operations
- 
-- Hierarchical data structure for skills
- 
-- AI-assisted validation and scoring for lessons
+This is the backend for PKM — a skill tracking app that uses AI to evaluate lesson quality and track skill progress over time.
 
-Skill-progress calculation and API responses consumed by the frontend
+For a full walkthrough of the app, features, and screenshots, see the [Frontend Repository](https://github.com/MaherGarni/Personal-Knowledge-Management-Frontend).
 
-Each lesson created via the API is processed to ensure it belongs to the correct category and is scored based on depth and relevance. These scores are later used to display progress and skill level in the UI.
+**The backend handles:**
+- User authentication using JWT
+- Returning categories and skills in a three-level hierarchy: Skill Domain → Skill Area → Skill
+- CRUD operations on categories and lessons
+- Lesson submission flow — AI matching, scoring, points calculation, and rating updates
+- Seeding new users with predefined categories on signup
+- Daily AI usage limits with automatic reset on login
+- User stats for the dashboard
 
-## Technology Used  
 
-- **Django**   
-- **Django REST Framework**   
-- **PostgreSQL**    
-- **Gemeni API**   
-- **JWT Authentication**   
-
-## Project Links  
-- **[Frontend Repo](https://github.com/MaherGarni/Personal-Knowledge-Management-Frontend)**  
-- **[Backend link](http://localhost:8000/)**  
 
 ## ERD Diagram  
-![ERD](./assets/ERD_diagram.png) 
+![ERD](./assets/ERD.png) 
 
-## Routing Table 
+Entities : UserProfile, Category, Lesson <br>
+Userprofile holds user info as well as user daily ai usage. <br>
+Category holds category/skill info and designed to represent the hierarchal structure with 
+self-referencing foreign key *"parent".*<br>
+Lesson holds lesson's info including user lesson input as well as the generated evaluation for the score and points. <br>
+<br>
+## Routing Table
 <h3>User</h3>
 <table border="1">
     <tr><th>HTTP Verb</th><th>Path</th><th>Action</th><th>Description</th></tr>
-    <tr><td>POST</td><td>/users/signup</td><td>create</td><td>create new user</td></tr>
-    <tr><td>POST</td><td>/users/login</td><td>authenticate</td><td>login a user</td></tr>
-    <tr><td>POST</td><td>/users/tokens/refresh</td><td>update</td><td>Update user's refresh token</td></tr>
+    <tr><td>POST</td><td>/users/signup</td><td>create</td><td>create new user and seed user with pre-defiend categories</td></tr>
+    <tr><td>POST</td><td>/users/login</td><td>authenticate</td><td>Authenticate user , check and reset daily AI limits if needed</td></tr>
+    <tr><td>POST</td><td>/users/tokens/refresh</td><td>update</td><td>Update user's refresh token, check and reset daily AI limits if needed</td></tr>
 </table>
 
 
@@ -45,29 +40,36 @@ Each lesson created via the API is processed to ensure it belongs to the correct
 <table border="1">
     <tr><th>HTTP Verb</th><th>Path</th><th>Action</th><th>Description</th></tr>
     <tr><td>GET</td><td>/categories</td><td>index</td><td>List all categories</td></tr>
-    <tr><td>POST</td><td>/categories</td><td>create</td><td>create new category</td></tr>
-    <tr><td>GET</td><td>/categories/:id</td><td>show</td><td>Show details of a category</td></tr>
+    <tr><td>POST</td><td>/categories</td><td>create</td><td>Create new category</td></tr>
+    <tr><td>GET</td><td>/categories/:id</td><td>show</td><td>Show category details and it's lessons</td></tr>
     <tr><td>PUT</td><td>/categories/:id</td><td>update</td><td>Update a category</td></tr>
     <tr><td>DELETE</td><td>/categories/:id</td><td>delete</td><td>Delete a category</td></tr>
 </table>
 
-<h3>Lesson</h3>
+<h3>Category Lessons</h3>
 <table border="1">
     <tr><th>HTTP Verb</th><th>Path</th><th>Action</th><th>Description</th></tr>
-    <tr><td>GET</td><td>/categories/:id/lessons</td><td>index</td><td>List all lessons related to a category</td></tr>
-    <tr><td>POST</td><td>/categories/:id/lessons</td><td>create</td><td>create new lesson in a category</td></tr>
-    <tr><td>GET</td><td>/categories/:id/lessons/:id</td><td>show</td><td>Show details of a lesson</td></tr>
-    <tr><td>PUT</td><td>/categories/:id/lessons/:id</td><td>update</td><td>Update a lesson</td></tr>
-    <tr><td>DELETE</td><td>/categories/:id/lessons/:id</td><td>delete</td><td>Delete a lesson</td></tr>
+    <tr><td>POST</td><td>/categories/:id/lessons</td><td>create</td><td>Create new lesson, run AI evaluation (matching + scoring), and update category and parent category ratings</td></tr>
+    <tr><td>PUT</td><td>/categories/:id/lessons/:id</td><td>update</td><td>Update lesson content and re-run full AI evaluation, replacing old score and points</td></tr>
+    <tr><td>DELETE</td><td>/categories/:id/lessons/:id</td><td>delete</td><td>Delete a lesson and recalculate category ratings</td></tr>
 </table>
 
-<h3>UserSkillScore</h3>
+<h3>Dashboard</h3>
 <table border="1">
     <tr><th>HTTP Verb</th><th>Path</th><th>Action</th><th>Description</th></tr>
-    <tr><td>GET</td><td>/scores</td><td>index</td><td>List all user scores for all skills</td></tr>
+    <tr><td>GET</td><td>/dashboard</td><td>index</td><td>List user stats for the dashboard</td></tr>
 </table>
 
   
+## Technology Used  
+
+- **Django REST Framework**   
+- **PostgreSQL**    
+- **Gemini API**   
+- **JWT Authentication**   
+
+## Project Links  
+- **[Frontend Repo](https://github.com/MaherGarni/Personal-Knowledge-Management-Frontend)**  
 ## Icebox Features  
 - Support file/image uploads for lessons
 - More advanced AI feedback + skill growth insights
