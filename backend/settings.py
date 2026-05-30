@@ -17,9 +17,10 @@ from environ import Env
 import dj_database_url
 
 
-#load_dotenv()
+load_dotenv()
 SECRET_KEY = os.environ.get("SECRET_KEY")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "production")
+
 
 
 
@@ -36,12 +37,11 @@ load_dotenv(dotenv_path=os.path.join(BASE_DIR, '.env.dev'))
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-if ENVIRONMENT == 'development':
+if ENVIRONMENT == 'development' or ENVIRONMENT == 'local' :
     DEBUG = True
 else :
     DEBUG = False
     
-#ALLOWED_HOSTS = ['.railway.app', 'localhost', '127.0.0.1']
 ALLOWED_HOSTS = ["*"]
 
 CORS_ALLOW_ALL_ORIGINS=False
@@ -50,7 +50,6 @@ CORS_ALLOWED_ORIGINS=[
     "http://127.0.0.1:5173",
     "http://localhost:5173",
     "https://personal-knowledge-management-front.vercel.app",
-    "https://personal-knowledge-management-frontend-b2ujhizt8.vercel.app"
 ]
 
 # Application definition
@@ -102,20 +101,20 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'pkm_db',
-#     }
-# }
-
 
 DATABASES={ 'default': dj_database_url.config(
     default=os.environ.get('DATABASE_URL'),
     conn_max_age=600,
 )
 }
-    
+
+if ENVIRONMENT == "local":
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get("DB_NAME"),
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
