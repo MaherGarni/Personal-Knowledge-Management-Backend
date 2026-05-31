@@ -460,7 +460,7 @@ class LessonDetail(APIView):
             category_total_points = Lesson.objects.filter(user=request.user, category=category_id).aggregate(Sum('points'))
             
             category = get_object_or_404(Category, id=category_id)
-            category.rating = min(category_total_points['points__sum'], 100 ) # to make sure rating don't exceed 100
+            category.rating = min(category_total_points['points__sum'], 100 ) if category_total_points['points__sum'] else 0 # to make sure rating don't exceed 100
             category.save()
             update_parent_category_rating(category)
             

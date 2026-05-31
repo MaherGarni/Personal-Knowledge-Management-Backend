@@ -70,6 +70,68 @@ Lesson holds lesson's info including user lesson input as well as the generated 
 
 ## Project Links  
 - **[Frontend Repo](https://github.com/MaherGarni/Personal-Knowledge-Management-Frontend)**  
+
+## Local Setup
+
+Before starting, make sure you have the following installed:
+
+- Python
+- PostgreSQL
+- pipenv
+
+### Backend Setup
+
+1. Clone the repository
+```bash
+   git clone https://github.com/MaherGarni/Personal-Knowledge-Management-Backend
+```
+
+2. Activate the virtual environment
+```bash
+   pipenv shell
+```
+
+3. Install dependencies
+```bash
+   pipenv install
+```
+4. Create a local PostgreSQL database
+```bash
+   psql -U postgres
+```
+```sql
+   CREATE DATABASE pkm_db;
+```
+   You can use a different name — just update it in the `.env` file.
+
+5. Create a `.env` file in the project root with the following variables:
+
+   Generate a secret key:
+```bash
+   python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+```
+
+```
+   SECRET_KEY=your_generated_secret_key
+   GEMINI_API_KEY=your_gemini_api_key  # Get one from https://aistudio.google.com/
+   ENVIRONMENT=local
+   DB_NAME=pkm_db   # your database name created above
+```
+
+6. Run migrations
+```bash
+   python manage.py migrate
+```
+
+7. Start the server
+```bash
+   python manage.py runserver
+```
+
+Backend is now running at `http://127.0.0.1:8000`
+
+
+
 ## Icebox Features  
 - Support file/image uploads for lessons
 - More advanced AI feedback + skill growth insights
