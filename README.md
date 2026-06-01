@@ -69,6 +69,7 @@ Lesson holds lesson's info including user lesson input as well as the generated 
 - **JWT Authentication**   
 
 ## Project Links  
+- **[Live App](https://personal-knowledge-management-front.vercel.app)**  
 - **[Frontend Repo](https://github.com/MaherGarni/Personal-Knowledge-Management-Frontend)**  
 
 ## Local Setup
