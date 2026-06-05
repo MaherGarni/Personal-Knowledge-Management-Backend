@@ -19,6 +19,7 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone 
 from django.db.models import F, Sum
 import sys
+from rest_framework.exceptions import ValidationError
 
 
 daily_reset_time = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -233,9 +234,10 @@ class CreateUserView(generics.CreateAPIView):
                 'user': user_data
             }
             return Response(data, status=status.HTTP_201_CREATED)
+        
+        except ValidationError as err:
+            return Response({'error' : str(err) } ,status=status.HTTP_400_BAD_REQUEST)
         except Exception as err:
-            print(serializer.errors, 'line 170')
-            print(str(err), flush=True, file=sys.stderr)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
@@ -259,7 +261,6 @@ class LoginView(APIView):
                 return Response(content, status=status.HTTP_200_OK)
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as err:
-            print(str(err), flush=True, file=sys.stderr)
             return Response({'error': str(err)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
 
